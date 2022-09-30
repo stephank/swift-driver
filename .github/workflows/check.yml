@@ -1,0 +1,32 @@
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        #os: ["ubuntu", "macos", "windows"]
+        os: ["ubuntu", "windows"]
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+
+      - uses: actions/checkout@v3
+
+      #- uses: swift-actions/setup-swift@v1
+      - uses: stephank/setup-swift@patch-1
+        if: matrix.os == 'windows'
+
+      - uses: actions/cache@v3
+        with:
+          path: .build
+          key: ${{ runner.os }}-swiftpm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-swiftpm-
+
+      - run: swift package resolve
+      - run: swift build
+      - run: swift test
